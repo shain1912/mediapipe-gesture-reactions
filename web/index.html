@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gesture Reactions</title>
+  <style>
+    :root {
+      --bg: #0e0f12;
+      --panel: #17191e;
+      --line: #2a2d35;
+      --text: #eceef2;
+      --muted: #8a8f9c;
+      --accent: #c6ff3d;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Pretendard", "Malgun Gothic", system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--line);
+    }
+    header h1 { font-size: 17px; margin: 0; letter-spacing: .02em; }
+    header .status { font-size: 13px; color: var(--muted); }
+    main {
+      flex: 1; display: grid; grid-template-columns: 1fr 300px; gap: 16px;
+      padding: 16px 20px; min-height: 0;
+    }
+    @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+
+    .stage {
+      position: relative; background: #000; border-radius: 14px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; min-height: 300px;
+    }
+    .stage canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+    #video { display: none; }
+
+    .start {
+      position: absolute; inset: 0; display: flex; flex-direction: column; gap: 14px;
+      align-items: center; justify-content: center; background: #000c; z-index: 5;
+    }
+    .start button {
+      font: inherit; font-size: 17px; font-weight: 700; padding: 14px 28px; border: 0;
+      border-radius: 999px; background: var(--accent); color: #111; cursor: pointer;
+    }
+    .start button:disabled { opacity: .5; cursor: wait; }
+    .start p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    /* 제스처 반응 (손 위에 뜸) */
+    .reaction {
+      position: absolute; left: 50%; top: 50%; z-index: 3; pointer-events: none;
+      transform: translate(-50%, -100%) scale(.4); opacity: 0;
+      transition: opacity .2s, transform .25s cubic-bezier(.2, 1.6, .4, 1), left .12s linear, top .12s linear;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .reaction.show { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+    .reaction .emoji { font-size: clamp(90px, 14vw, 180px); line-height: 1; filter: drop-shadow(0 8px 20px #0008); }
+    .reaction svg { width: clamp(180px, 26vw, 340px); filter: drop-shadow(0 8px 20px #0009); }
+    .reaction .caption {
+      margin-top: 6px; font-weight: 800; letter-spacing: .25em; font-size: 15px;
+      background: #000a; padding: 4px 12px; border-radius: 999px;
+    }
+
+    aside { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .card h2 { margin: 0 0 10px; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .08em; }
+    #current { font-size: 30px; font-weight: 800; }
+    .bar-row { display: grid; grid-template-columns: 64px 1fr 40px; gap: 8px; align-items: center; margin: 7px 0; font-size: 13px; }
+    .bar { height: 8px; background: #262931; border-radius: 99px; overflow: hidden; }
+    .bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .08s; }
+    .bar-row span:last-child { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+    label.slider { display: flex; justify-content: space-between; font-size: 13px; }
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+    .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gesture Reactions</h1>
+    <span class="status" id="status">대기 중</span>
+  </header>
+
+  <main>
+    <section class="stage" id="stage">
+      <video id="video" playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div class="reaction" id="reaction"></div>
+      <div class="start" id="start">
+        <button id="startBtn">카메라 시작</button>
+        <p>nike 또는 ok 제스처를 해보세요</p>
+      </div>
+    </section>
+
+    <aside>
+      <div class="card">
+        <h2>인식 결과</h2>
+        <div id="current">-</div>
+      </div>
+      <div class="card">
+        <h2>클래스별 확률</h2>
+        <div id="bars"></div>
+      </div>
+      <div class="card">
+        <h2>설정</h2>
+        <label class="slider">확신도 기준 <b id="thrVal">0.70</b></label>
+        <input type="range" id="thr" min="0.3" max="0.99" step="0.01" value="0.7">
+        <p class="hint">기준보다 낮으면 Unknown 으로 처리합니다.<br>
+          최근 프레임 다수결로 판정해 깜빡임을 줄였습니다.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
